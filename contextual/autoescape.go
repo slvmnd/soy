@@ -1,4 +1,4 @@
-package parsepasses
+package contextual
 
 import (
 	"fmt"
@@ -35,12 +35,18 @@ func Autoescape(reg template.Registry) (err error) {
 
 		// build a graph of template calls
 		// assume the roots are all HTML context.
+		var inferences engine
 		var callGraph = newCallGraph(reg)
 		for _, root := range callGraph.roots() {
-			var startContext = htmlPCData
+			var startContext = context{state: statePCDATA}
 			if root.Kind != "" {
-
+				var ok bool
+				startContext.state, ok = kindAttrToState[root.Kind]
+				if !ok {
+					panic("Kind " + root.Kind + " not recognized")
+				}
 			}
+			engine.infer(root, startContext)
 		}
 	}
 

@@ -2,7 +2,6 @@ package parsepasses
 
 import (
 	"bytes"
-	"fmt"
 
 	"testing"
 
@@ -98,6 +97,20 @@ func TestAutoescapeModes(t *testing.T) {
 	})
 }
 
+func TestContextualAutoescape(t *testing.T) {
+	runExecTests(t, []execTest{
+		{"simple", "test.simple", `{namespace test autoescape="contextual"}
+
+{template .simple}
+  {$foo}
+{/template}`,
+			"&lt;b&gt;hello&lt;/b&gt;",
+			d{"foo": "<b>hello</b>"},
+			true,
+		},
+	})
+}
+
 func runExecTests(t *testing.T, tests []execTest) {
 	var nstest []nsExecTest
 	for _, test := range tests {
@@ -114,7 +127,8 @@ func runExecTests(t *testing.T, tests []execTest) {
 }
 
 func runNsExecTests(t *testing.T, tests []nsExecTest) {
-	b := new(bytes.Buffer)
+	var err error
+	var b = new(bytes.Buffer)
 	for _, test := range tests {
 		var registry = template.Registry{}
 		for _, input := range test.input {
@@ -125,16 +139,17 @@ func runNsExecTests(t *testing.T, tests []nsExecTest) {
 			}
 			registry.Add(tree)
 		}
-		Autoescape(registry)
-
-		b.Reset()
-		var datamap data.Map
-		if test.data != nil {
-			datamap = data.New(test.data).(data.Map)
+		err = Autoescape(registry)
+		if err == nil {
+			b.Reset()
+			var datamap data.Map
+			if test.data != nil {
+				datamap = data.New(test.data).(data.Map)
+			}
+			err = soyhtml.NewTofu(&registry).NewRenderer(test.templateName).
+				//			Inject(ij).
+				Execute(b, datamap)
 		}
-		err := soyhtml.NewTofu(&registry).NewRenderer(test.templateName).
-			//			Inject(ij).
-			Execute(b, datamap)
 		switch {
 		case !test.ok && err == nil:
 			t.Errorf("%s: expected error; got none", test.name)
