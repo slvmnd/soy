@@ -5,11 +5,11 @@ import (
 	"github.com/robfig/soy/soyhtml"
 )
 
-type autoescaper struct {
+type simpleAutoescaper struct {
 	mode ast.AutoescapeType // current escaping mode
 }
 
-func (a *autoescaper) walk(node ast.Node) {
+func (a *simpleAutoescaper) walk(node ast.Node) {
 	var prev = a.mode
 	switch node := node.(type) {
 	case *ast.TemplateNode:
@@ -29,7 +29,7 @@ func (a *autoescaper) walk(node ast.Node) {
 	a.mode = prev
 }
 
-func (a *autoescaper) escape(node *ast.PrintNode) {
+func (a *simpleAutoescaper) escape(node *ast.PrintNode) {
 	for _, dir := range node.Directives {
 		var d = soyhtml.PrintDirectives[dir.Name]
 		if d.CancelAutoescape {
