@@ -121,6 +121,20 @@ func (n *TemplateNode) Children() []Node {
 	return []Node{n.Body}
 }
 
+// DelTemplateNode is a template with a variant string
+type DelTemplateNode struct {
+	TemplateNode
+	Variant string
+}
+
+func (n *DelTemplateNode) String() string {
+	return fmt.Sprintf("{deltemplate %s variant=\"'%s'\"}\n%s\n{/deltemplate}\n", n.Name, n.Variant, n.Body)
+}
+
+func (n *DelTemplateNode) Children() []Node {
+	return []Node{n.Body}
+}
+
 type SoyDocNode struct {
 	Pos
 	Params []*SoyDocParamNode
@@ -343,6 +357,33 @@ func (n *CallNode) Children() []Node {
 		nodes = append(nodes, child)
 	}
 	return nodes
+}
+
+// DelCallNode is a CallNode with a variant argument
+type DelCallNode struct {
+	CallNode
+	Variant Node
+}
+
+func (n *DelCallNode) String() string {
+	var expr = fmt.Sprintf("{delcall %s variant=\"%s\"", n.Name, n.Variant.String())
+	if n.AllData {
+		expr += ` data="all"`
+	} else if n.Data != nil {
+		expr += fmt.Sprintf(` data="%s"`, n.Data.String())
+	}
+	if n.Params == nil {
+		return expr + "/}"
+	}
+	expr += "}"
+	for _, param := range n.Params {
+		expr += param.String()
+	}
+	return expr + "{/delcall}"
+}
+
+func (n *DelCallNode) Children() []Node {
+	return n.CallNode.Children()
 }
 
 type CallParamValueNode struct {
