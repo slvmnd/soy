@@ -132,6 +132,8 @@ func (t *tree) beginTag() ast.Node {
 		return t.parseNamespace(token)
 	case itemTemplate:
 		return t.parseTemplate(token)
+	case itemDeltemplate:
+		return t.parseDelTemplate(token)
 	case itemIf:
 		return t.parseIf(token)
 	case itemMsg:
@@ -142,6 +144,8 @@ func (t *tree) beginTag() ast.Node {
 		return t.parseSwitch(token)
 	case itemCall:
 		return t.parseCall(token)
+	case itemDelcall:
+		return t.parseDelCall(token)
 	case itemLiteral:
 		t.expect(itemRightDelim, "literal")
 		literalText := t.expect(itemText, "literal")
@@ -323,6 +327,77 @@ func (t *tree) parseCall(token item) ast.Node {
 		return &ast.CallNode{token.pos, templateName, allData, dataNode, body}
 	default:
 		t.unexpected(tok, "error scanning {call}")
+	}
+	panic("unreachable")
+}
+
+// "delcall" has just been read.
+func (t *tree) parseDelCall(token item) ast.Node {
+	var templateName string
+	switch tok := t.next(); tok.typ {
+	case itemDotIdent:
+		templateName = tok.val
+	case itemIdent:
+		// this ident could either be {call fully.qualified.name} or attributes.
+		switch tok2 := t.next(); tok2.typ {
+		case itemDotIdent:
+			templateName = tok.val + tok2.val
+			for tokn := t.next(); tokn.typ == itemDotIdent; tokn = t.next() {
+				templateName += tokn.val
+			}
+			t.backup()
+		default:
+			t.backup2(tok)
+		}
+	default:
+		t.backup()
+	}
+	attrs := t.parseAttrs("name", "data", "variant")
+
+	if templateName == "" {
+		templateName = attrs["name"]
+	}
+	if templateName == "" {
+		t.errorf("delcall: template name not found")
+	}
+
+	// If it's not a fully qualified template name, apply the namespace or aliases
+	if templateName[0] == '.' {
+		templateName = t.namespace + templateName
+	} else if dot := strings.Index(templateName, "."); dot != -1 {
+		if alias, ok := t.aliases[templateName[:dot]]; ok {
+			templateName = alias + templateName[dot:]
+		}
+	}
+
+	var allData = false
+	var dataNode ast.Node = nil
+	if data, ok := attrs["data"]; ok {
+		if data == "all" {
+			allData = true
+		} else {
+			dataNode = t.parseQuotedExpr(data)
+		}
+	}
+
+	var variantNode ast.Node = nil
+	if variant, ok := attrs["variant"]; ok {
+		variantNode = t.parseQuotedExpr(variant)
+	} else {
+		variantNode = &ast.StringNode{Quoted: "''", Value: ""}
+	}
+
+	switch tok := t.next(); tok.typ {
+	case itemRightDelimEnd:
+		return &ast.DelCallNode{ast.CallNode{token.pos, templateName, allData, dataNode, nil}, variantNode}
+	case itemRightDelim:
+		body := t.parseCallParams()
+		t.expect(itemLeftDelim, "delcall")
+		t.expect(itemCallEnd, "delcall")
+		t.expect(itemRightDelim, "delcall")
+		return &ast.DelCallNode{ast.CallNode{token.pos, templateName, allData, dataNode, body}, variantNode}
+	default:
+		t.unexpected(tok, "error scanning {delcall}")
 	}
 	panic("unreachable")
 }
@@ -629,6 +704,31 @@ func (t *tree) parseTemplate(token item) ast.Node {
 		t.itemList(itemTemplateEnd),
 		autoescape,
 		private,
+	}
+	t.expect(itemRightDelim, ctx)
+	return tmpl
+}
+
+func (t *tree) parseDelTemplate(token item) ast.Node {
+	const ctx = "deltemplate tag"
+	var id = t.expect(itemDotIdent, ctx)
+	var attrs = t.parseAttrs("autoescape", "private", "variant")
+	var autoescape = t.parseAutoescape(attrs)
+	var private = t.boolAttr(attrs, "private", false)
+	variant, err := unquoteString(attrs["variant"])
+	if err != nil {
+		t.errorf("deltemplate: incorrect variant value %q", err)
+	}
+	t.expect(itemRightDelim, ctx)
+	tmpl := &ast.DelTemplateNode{
+		ast.TemplateNode{
+			token.pos,
+			t.namespace + id.val,
+			t.itemList(itemTemplateEnd),
+			autoescape,
+			private,
+		},
+		variant,
 	}
 	t.expect(itemRightDelim, ctx)
 	return tmpl

@@ -725,12 +725,13 @@ func TestRecognizeCommands(t *testing.T) {
 		"{/call}")
 
 	// TODO: implement delcall
-	// works(t, "{delcall aaa.bbb.ccc data=\"all\" /}")
-	// works(t, ""+
-	// 	"{delcall name=\"ddd.eee\"}\n"+
-	// 	"  {{param key=\"boo\" value=\"$boo\" /}}\n"+
-	// 	"  {param key=\"foo\"}blah blah{/param}\n"+
-	// 	"{/delcall}")
+	works(t, "{delcall aaa.bbb.ccc data=\"all\" /}")
+	works(t, "{delcall aaa.bbb.ccc data=\"all\" variant=\"'test'\" /}")
+	//works(t, ""+
+	//	"{delcall name=\"ddd.eee\"}\n"+
+	//	"  {{param key=\"boo\" value=\"$boo\" /}}\n"+
+	//	"  {param key=\"foo\"}blah blah{/param}\n"+
+	//	"{/delcall}")
 
 	// TODO: implement phname
 	// works(t, ""+
@@ -771,7 +772,7 @@ func TestRecognizeCommands(t *testing.T) {
 	fails(t, "{if true}aaa{else/}bbb{/if}")
 	fails(t, "{call .aaa.bbb /}")
 	fails(t, "{delcall name=\"ddd.eee\"}{param foo: 0}{/call}")
-	fails(t, "{delcall .dddEee /}")
+	//fails(t, "{delcall .dddEee /}")
 
 	// TODO: implement phname
 	// fails(t, "{msg desc=\"\"}{$boo phname=\"boo.foo\"}{/msg}")
