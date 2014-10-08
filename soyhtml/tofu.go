@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/robfig/soy/data"
-	"github.com/robfig/soy/template"
+	"github.com/slvmnd/soy/data"
+	"github.com/slvmnd/soy/template"
 )
 
 // Tofu is a bundle of compiled soy, ready to render to HTML.

@@ -11,8 +11,8 @@ import (
 	"testing"
 
 	"github.com/robertkrimen/otto"
-	"github.com/robfig/soy/data"
-	"github.com/robfig/soy/parse"
+	"github.com/slvmnd/soy/data"
+	"github.com/slvmnd/soy/parse"
 )
 
 // TODO: test all types of globals

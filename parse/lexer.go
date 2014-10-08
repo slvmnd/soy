@@ -6,7 +6,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/robfig/soy/ast"
+	"github.com/slvmnd/soy/ast"
 )
 
 // Lexer design from text/template

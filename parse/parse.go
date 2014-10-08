@@ -9,8 +9,8 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/robfig/soy/ast"
-	"github.com/robfig/soy/data"
+	"github.com/slvmnd/soy/ast"
+	"github.com/slvmnd/soy/data"
 )
 
 // tree is the parsed representation of a single soy file.

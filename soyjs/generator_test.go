@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/robertkrimen/otto"
-	"github.com/robfig/soy/ast"
-	"github.com/robfig/soy/parse"
-	"github.com/robfig/soy/template"
+	"github.com/slvmnd/soy/ast"
+	"github.com/slvmnd/soy/parse"
+	"github.com/slvmnd/soy/template"
 )
 
 func TestGenerator(t *testing.T) {

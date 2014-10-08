@@ -9,11 +9,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/robfig/soy/data"
-	"github.com/robfig/soy/parse"
-	"github.com/robfig/soy/parsepasses"
-	"github.com/robfig/soy/soyhtml"
-	"github.com/robfig/soy/template"
+	"github.com/slvmnd/soy/data"
+	"github.com/slvmnd/soy/parse"
+	"github.com/slvmnd/soy/parsepasses"
+	"github.com/slvmnd/soy/soyhtml"
+	"github.com/slvmnd/soy/template"
 	"gopkg.in/fsnotify.v0"
 )
 
