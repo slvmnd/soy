@@ -393,7 +393,7 @@ func (t *tree) parseDelCall(token item) ast.Node {
 	case itemRightDelim:
 		body := t.parseCallParams()
 		t.expect(itemLeftDelim, "delcall")
-		t.expect(itemCallEnd, "delcall")
+		t.expect(itemDelcallEnd, "delcall")
 		t.expect(itemRightDelim, "delcall")
 		return &ast.DelCallNode{ast.CallNode{token.pos, templateName, allData, dataNode, body}, variantNode}
 	default:
@@ -432,7 +432,7 @@ func (t *tree) parseCallParams() []ast.Node {
 		}
 
 		var cmd = t.next()
-		if cmd.typ == itemCallEnd {
+		if cmd.typ == itemCallEnd || cmd.typ == itemDelcallEnd {
 			t.backup2(initial)
 			return params
 		}
@@ -724,7 +724,7 @@ func (t *tree) parseDelTemplate(token item) ast.Node {
 		ast.TemplateNode{
 			token.pos,
 			t.namespace + id.val,
-			t.itemList(itemTemplateEnd),
+			t.itemList(itemDeltemplateEnd),
 			autoescape,
 			private,
 		},

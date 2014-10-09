@@ -30,6 +30,9 @@ func (r *Registry) Add(soyfile *ast.SoyFileNode) error {
 	if r.sourceByTemplateName == nil {
 		r.sourceByTemplateName = make(map[string]string)
 	}
+	if r.sourceByDelTemplateName == nil {
+		r.sourceByDelTemplateName = make(map[delPair]string)
+	}
 	var ns *ast.NamespaceNode
 	for _, node := range soyfile.Body {
 		switch node := node.(type) {

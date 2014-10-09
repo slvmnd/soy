@@ -69,6 +69,8 @@ func (s *state) walk(node ast.Node) {
 		return
 	case *ast.TemplateNode:
 		s.visitTemplate(node)
+	case *ast.DelTemplateNode:
+		s.visitDelTemplate(node)
 	case *ast.ListNode:
 		s.visitChildren(node)
 
@@ -102,6 +104,8 @@ func (s *state) walk(node ast.Node) {
 		s.visitSwitch(node)
 	case *ast.CallNode:
 		s.visitCall(node)
+	case *ast.DelCallNode:
+		s.visitDelCall(node)
 	case *ast.LetValueNode:
 		s.jsln("var ", s.scope.makevar(node.Name), " = ", node.Expr, ";")
 	case *ast.LetContentNode:
@@ -265,6 +269,39 @@ func (s *state) visitTemplate(node *ast.TemplateNode) {
 	s.autoescape = oldAutoescape
 }
 
+func (s *state) visitDelTemplate(node *ast.DelTemplateNode) {
+	var oldAutoescape = s.autoescape
+	if node.Autoescape != ast.AutoescapeUnspecified {
+		s.autoescape = node.Autoescape
+	}
+
+	// Determine if we need nullsafe initialization for opt_data
+	var allOptionalParams = false
+	if soydoc, ok := s.lastNode.(*ast.SoyDocNode); ok {
+		allOptionalParams = len(soydoc.Params) > 0
+		for _, param := range soydoc.Params {
+			if !param.Optional {
+				allOptionalParams = false
+			}
+		}
+	}
+
+	s.jsln("")
+	s.jsln("if (typeof " + node.Name + " == 'undefined') { " + node.Name + " = {}; }")
+	s.jsln(node.Name+"['"+node.Variant+"']", " = function(opt_data, opt_sb, opt_ijData) {")
+	s.indentLevels++
+	if allOptionalParams {
+		s.jsln("opt_data = opt_data || {};")
+	}
+	s.jsln("var output = '';")
+	s.bufferName = "output"
+	s.walk(node.Body)
+	s.jsln("return output;")
+	s.indentLevels--
+	s.jsln("};")
+	s.autoescape = oldAutoescape
+}
+
 // TODO: unify print directives
 func (s *state) visitPrint(node *ast.PrintNode) {
 	var escape = s.autoescape
@@ -372,26 +409,45 @@ func (s *state) visitCall(node *ast.CallNode) {
 	}
 
 	if len(node.Params) > 0 {
-		dataExpr = "soy.$$augmentMap(" + dataExpr + ", {"
-		for i, param := range node.Params {
-			if i > 0 {
-				dataExpr += ", "
-			}
-			switch param := param.(type) {
-			case *ast.CallParamValueNode:
-				dataExpr += param.Key + ": " + s.block(param.Value)
-			case *ast.CallParamContentNode:
-				var oldBufferName = s.bufferName
-				s.bufferName = s.scope.makevar("param")
-				s.jsln("var ", s.bufferName, " = '';")
-				s.walk(param.Content)
-				dataExpr += param.Key + ": " + s.bufferName
-				s.bufferName = oldBufferName
-			}
-		}
-		dataExpr += "})"
+		dataExpr = s.dataExpr(dataExpr, node)
 	}
 	s.jsln(s.bufferName, " += ", node.Name, "(", dataExpr, ", opt_sb, opt_ijData);")
+}
+
+func (s *state) visitDelCall(node *ast.DelCallNode) {
+	var dataExpr = "{}"
+	if node.Data != nil {
+		dataExpr = s.block(node.Data)
+	} else if node.AllData {
+		dataExpr = "opt_data"
+	}
+
+	if len(node.Params) > 0 {
+		dataExpr = s.dataExpr(dataExpr, &node.CallNode)
+	}
+	s.jsln(s.bufferName, " += ", node.Name, "[", s.block(node.Data), "](", dataExpr, ", opt_sb, opt_ijData);")
+}
+
+func (s *state) dataExpr(dataExpr string, node *ast.CallNode) string {
+	dataExpr = "soy.$$augmentMap(" + dataExpr + ", {"
+	for i, param := range node.Params {
+		if i > 0 {
+			dataExpr += ", "
+		}
+		switch param := param.(type) {
+		case *ast.CallParamValueNode:
+			dataExpr += param.Key + ": " + s.block(param.Value)
+		case *ast.CallParamContentNode:
+			var oldBufferName = s.bufferName
+			s.bufferName = s.scope.makevar("param")
+			s.jsln("var ", s.bufferName, " = '';")
+			s.walk(param.Content)
+			dataExpr += param.Key + ": " + s.bufferName
+			s.bufferName = oldBufferName
+		}
+	}
+	dataExpr += "})"
+	return dataExpr
 }
 
 func (s *state) visitIf(node *ast.IfNode) {
