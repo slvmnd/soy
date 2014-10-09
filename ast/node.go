@@ -383,7 +383,13 @@ func (n *DelCallNode) String() string {
 }
 
 func (n *DelCallNode) Children() []Node {
-	return n.CallNode.Children()
+	var nodes []Node
+	nodes = append(nodes, n.Data)
+	nodes = append(nodes, n.Variant)
+	for _, child := range n.Params {
+		nodes = append(nodes, child)
+	}
+	return nodes
 }
 
 type CallParamValueNode struct {
