@@ -120,10 +120,10 @@ func (r *Registry) DelTemplate(name, variant string) (DelTemplate, bool) {
 
 // DelLineNumber computes the line number in the input source for the given node
 // within the given template variant.
-func (r *Registry) DelLineNumber(templateName string, node ast.Node) int {
-	var src, ok = r.sourceByTemplateName[templateName]
+func (r *Registry) DelLineNumber(templateName, variant string, node ast.Node) int {
+	var src, ok = r.sourceByDelTemplateName[delPair{templateName, variant}]
 	if !ok {
-		log.Println("template not found:", templateName)
+		log.Println("delegate template not found:", templateName, " variant:", variant)
 		return 0
 	}
 	return 1 + strings.Count(src[:node.Position()], "\n")
