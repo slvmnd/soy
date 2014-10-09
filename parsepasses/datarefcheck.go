@@ -65,6 +65,8 @@ func (tc *templateChecker) checkTemplate(node ast.Node) {
 		tc.letVars = append(tc.letVars, node.Name)
 	case *ast.CallNode:
 		tc.checkCall(node)
+	case *ast.DelCallNode:
+		tc.checkDelCall(node)
 	case *ast.ForNode:
 		tc.forVars = append(tc.forVars, node.Var)
 	case *ast.DataRefNode:
@@ -88,9 +90,22 @@ func (tc *templateChecker) checkCall(node *ast.CallNode) {
 		panic(fmt.Errorf("{call}: template %q not found", node.Name))
 	}
 
+	tc.checkCallAgainstDoc(node, callee.Doc)
+}
+
+func (tc *templateChecker) checkDelCall(node *ast.DelCallNode) {
+	var callee, ok = tc.registry.DelTemplate(node.Name, node.Variant.String())
+	if !ok {
+		panic(fmt.Errorf("{delcall}: template %q with variant %q not found", node.Name, node.Variant.String()))
+	}
+
+	tc.checkCallAgainstDoc(&node.CallNode, callee.Doc)
+}
+
+func (tc *templateChecker) checkCallAgainstDoc(node *ast.CallNode, doc *ast.SoyDocNode) {
 	// collect callee's list of required/allowed params
 	var allCalleeParamNames, requiredCalleeParamNames []string
-	for _, param := range callee.Doc.Params {
+	for _, param := range doc.Params {
 		allCalleeParamNames = append(allCalleeParamNames, param.Name)
 		if !param.Optional {
 			requiredCalleeParamNames = append(requiredCalleeParamNames, param.Name)
