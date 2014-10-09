@@ -94,12 +94,7 @@ func (tc *templateChecker) checkCall(node *ast.CallNode) {
 }
 
 func (tc *templateChecker) checkDelCall(node *ast.DelCallNode) {
-	var callee, ok = tc.registry.DelTemplate(node.Name, node.Variant.String())
-	if !ok {
-		panic(fmt.Errorf("{delcall}: template %q with variant %q not found", node.Name, node.Variant.String()))
-	}
-
-	tc.checkCallAgainstDoc(&node.CallNode, callee.Doc)
+	// Nothing to do here as we can't know which delegate template will be called
 }
 
 func (tc *templateChecker) checkCallAgainstDoc(node *ast.CallNode, doc *ast.SoyDocNode) {

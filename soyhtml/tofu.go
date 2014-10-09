@@ -48,3 +48,28 @@ func (tofu *Tofu) NewRenderer(name string) *Renderer {
 		name: name,
 	}
 }
+
+// RenderDelegate is a convenience function just like Render,
+// for rendering a delegate template with variant argument
+func (tofu Tofu) RenderDelegate(wr io.Writer, name, variant string, obj interface{}) error {
+	var m data.Map
+	if obj != nil {
+		var ok bool
+		m, ok = data.New(obj).(data.Map)
+		if !ok {
+			return fmt.Errorf("invalid data type. expected map/struct, got %T", obj)
+		}
+	}
+	return tofu.NewDelegateRenderer(name, variant).Execute(wr, m)
+}
+
+// NewDelegateRenderer returns a new instance of a soy html renderer, given the
+// fully-qualified name and the variant argument of the delegate template to render.
+func (tofu *Tofu) NewDelegateRenderer(name string, variant string) *Renderer {
+	return &Renderer{
+		tofu:           tofu,
+		name:           name,
+		variant:        variant,
+		useDelTemplate: true,
+	}
+}

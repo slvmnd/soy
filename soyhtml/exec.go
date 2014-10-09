@@ -73,6 +73,11 @@ func (s *state) walk(node ast.Node) {
 			s.autoescape = node.Autoescape
 		}
 		s.walk(node.Body)
+	case *ast.DelTemplateNode:
+		if node.Autoescape != ast.AutoescapeUnspecified {
+			s.autoescape = node.Autoescape
+		}
+		s.walk(node.Body)
 	case *ast.ListNode:
 		for _, node := range node.Nodes {
 			s.walk(node)
@@ -144,6 +149,8 @@ func (s *state) walk(node ast.Node) {
 		}
 	case *ast.CallNode:
 		s.evalCall(node)
+	case *ast.DelCallNode:
+		s.evalDelCall(node)
 	case *ast.LetValueNode:
 		s.context.set(node.Name, s.eval(node.Expr))
 	case *ast.LetContentNode:
@@ -341,6 +348,26 @@ func (s *state) evalCall(node *ast.CallNode) {
 		s.errorf("failed to find template: %s", node.Name)
 	}
 
+	s.evalCallWithTemplate(node, calledTmpl)
+}
+
+func (s *state) evalDelCall(node *ast.DelCallNode) {
+	// get template node we're calling
+	var variantResult = s.eval(node.Variant).String()
+	var calledTmpl, ok = s.registry.DelTemplate(node.Name, variantResult)
+	if !ok {
+		s.errorf("failed to find deltemplate: %s with variant %s", node.Name, variantResult)
+	}
+
+	tmpl := soyt.Template{
+		Doc:       calledTmpl.Doc,
+		Node:      &calledTmpl.Node.TemplateNode,
+		Namespace: calledTmpl.Namespace,
+	}
+	s.evalCallWithTemplate(&node.CallNode, tmpl)
+}
+
+func (s *state) evalCallWithTemplate(node *ast.CallNode, calledTmpl soyt.Template) {
 	// sort out the data to pass
 	var callData scope
 	if node.AllData {
