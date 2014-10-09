@@ -425,7 +425,7 @@ func (s *state) visitDelCall(node *ast.DelCallNode) {
 	if len(node.Params) > 0 {
 		dataExpr = s.dataExpr(dataExpr, &node.CallNode)
 	}
-	s.jsln(s.bufferName, " += ", node.Name, "[", s.block(node.Data), "](", dataExpr, ", opt_sb, opt_ijData);")
+	s.jsln(s.bufferName, " += ", node.Name, "[", s.block(node.Variant), "](", dataExpr, ", opt_sb, opt_ijData);")
 }
 
 func (s *state) dataExpr(dataExpr string, node *ast.CallNode) string {
