@@ -57,6 +57,9 @@ func NewWith(convert StructOptions, value interface{}) Value {
 		for i := 0; i < v.Len(); i++ {
 			slice = append(slice, NewWith(convert, v.Index(i).Interface()))
 		}
+		if slice == nil {
+			slice = []Value{}
+		}
 		return List(slice)
 	case reflect.Map:
 		var m = make(map[string]Value)
