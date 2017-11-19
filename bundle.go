@@ -26,10 +26,11 @@ type soyFile struct{ name, content string }
 // Bundle is a collection of soy content (templates and globals).  It acts as
 // input for the soy compiler.
 type Bundle struct {
-	files   []soyFile
-	globals data.Map
-	err     error
-	watcher *fsnotify.Watcher
+	files       []soyFile
+	globals     data.Map
+	err         error
+	watcher     *fsnotify.Watcher
+	Transformer func([]byte) []byte
 }
 
 // NewBundle returns an empty bundle.
@@ -78,6 +79,9 @@ func (b *Bundle) AddTemplateFile(filename string) *Bundle {
 	}
 	if b.err == nil && b.watcher != nil {
 		b.err = b.watcher.Watch(filename)
+	}
+	if b.Transformer != nil {
+		content = b.Transformer(content)
 	}
 	return b.AddTemplateString(filename, string(content))
 }
