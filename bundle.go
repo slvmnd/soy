@@ -30,7 +30,7 @@ type Bundle struct {
 	globals     data.Map
 	err         error
 	watcher     *fsnotify.Watcher
-	Transformer func([]byte) []byte
+	Transformer func([]byte) ([]byte, error)
 }
 
 // NewBundle returns an empty bundle.
@@ -81,7 +81,10 @@ func (b *Bundle) AddTemplateFile(filename string) *Bundle {
 		b.err = b.watcher.Watch(filename)
 	}
 	if b.Transformer != nil {
-		content = b.Transformer(content)
+		content, err = b.Transformer(content)
+		if err != nil {
+			b.err = err
+		}
 	}
 	return b.AddTemplateString(filename, string(content))
 }
