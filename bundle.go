@@ -83,7 +83,7 @@ func (b *Bundle) AddTemplateFile(filename string) *Bundle {
 	if b.Transformer != nil {
 		content, err = b.Transformer(content)
 		if err != nil {
-			b.err = err
+			b.err = fmt.Errorf("Error transforming file %s: %s", filename, err)
 		}
 	}
 	return b.AddTemplateString(filename, string(content))
