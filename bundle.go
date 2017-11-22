@@ -178,6 +178,8 @@ func (b *Bundle) recompiler(reg *template.Registry) {
 			// Recompile all the soy.
 			var bundle = NewBundle().
 				AddGlobalsMap(b.globals)
+			bundle.Transformer = b.Transformer
+
 			for _, soyfile := range b.files {
 				bundle.AddTemplateFile(soyfile.name)
 			}
