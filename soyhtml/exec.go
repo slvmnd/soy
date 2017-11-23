@@ -421,6 +421,9 @@ func (s *state) renderBlock(node ast.Node) []byte {
 }
 
 func checkNumArgs(allowedNumArgs []int, numArgs int) bool {
+	if len(allowedNumArgs) == 0 {
+		return true
+	}
 	for _, length := range allowedNumArgs {
 		if numArgs == length {
 			return true
@@ -448,7 +451,7 @@ func (s *state) evalFunc(node *ast.FunctionNode) data.Value {
 				s.errorf("panic in %s(%v): %v\n%v", node.Name, args, err, string(debug.Stack()))
 			}
 		}()
-		r := fn.Apply(args)
+		r := fn.Apply(s.ij, args)
 		if r == nil {
 			return data.Null{}
 		}

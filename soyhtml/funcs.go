@@ -31,7 +31,7 @@ func funcIsLast(s *state, key string) data.Value {
 
 // Func represents a soy function that may be invoked within a soy template.
 type Func struct {
-	Apply           func([]data.Value) data.Value
+	Apply           func(data.Map, []data.Value) data.Value
 	ValidArgLengths []int
 }
 
@@ -53,15 +53,15 @@ var Funcs = map[string]Func{
 	"hasData":     {funcHasData, []int{0}},
 }
 
-func funcIsNonnull(v []data.Value) data.Value {
+func funcIsNonnull(ij data.Map, v []data.Value) data.Value {
 	return data.Bool(!(v[0] == data.Null{} || v[0] == data.Undefined{}))
 }
 
-func funcLength(v []data.Value) data.Value {
+func funcLength(ij data.Map, v []data.Value) data.Value {
 	return data.Int(len(v[0].(data.List)))
 }
 
-func funcKeys(v []data.Value) data.Value {
+func funcKeys(ij data.Map, v []data.Value) data.Value {
 	var keys data.List
 	for k, _ := range v[0].(data.Map) {
 		keys = append(keys, data.String(k))
@@ -69,7 +69,7 @@ func funcKeys(v []data.Value) data.Value {
 	return keys
 }
 
-func funcAugmentMap(v []data.Value) data.Value {
+func funcAugmentMap(ij data.Map, v []data.Value) data.Value {
 	var m1 = v[0].(data.Map)
 	var m2 = v[1].(data.Map)
 	var result = make(data.Map, len(m1)+len(m2)+4)
@@ -82,7 +82,7 @@ func funcAugmentMap(v []data.Value) data.Value {
 	return result
 }
 
-func funcRound(v []data.Value) data.Value {
+func funcRound(ij data.Map, v []data.Value) data.Value {
 	var digitsAfterPt = 0
 	if len(v) == 2 {
 		digitsAfterPt = int(v[1].(data.Int))
@@ -105,21 +105,21 @@ func round(x float64, prec int) float64 {
 	return float64(int64(intermed)) / float64(pow)
 }
 
-func funcFloor(v []data.Value) data.Value {
+func funcFloor(ij data.Map, v []data.Value) data.Value {
 	if isInt(v[0]) {
 		return v[0]
 	}
 	return data.Int(math.Floor(toFloat(v[0])))
 }
 
-func funcCeiling(v []data.Value) data.Value {
+func funcCeiling(ij data.Map, v []data.Value) data.Value {
 	if isInt(v[0]) {
 		return v[0]
 	}
 	return data.Int(math.Ceil(toFloat(v[0])))
 }
 
-func funcMin(v []data.Value) data.Value {
+func funcMin(ij data.Map, v []data.Value) data.Value {
 	if isInt(v[0]) && isInt(v[1]) {
 		if v[0].(data.Int) < v[1].(data.Int) {
 			return v[0]
@@ -129,7 +129,7 @@ func funcMin(v []data.Value) data.Value {
 	return data.Float(math.Min(toFloat(v[0]), toFloat(v[1])))
 }
 
-func funcMax(v []data.Value) data.Value {
+func funcMax(ij data.Map, v []data.Value) data.Value {
 	if isInt(v[0]) && isInt(v[1]) {
 		if v[0].(data.Int) > v[1].(data.Int) {
 			return v[0]
@@ -139,15 +139,15 @@ func funcMax(v []data.Value) data.Value {
 	return data.Float(math.Max(toFloat(v[0]), toFloat(v[1])))
 }
 
-func funcRandomInt(v []data.Value) data.Value {
+func funcRandomInt(ij data.Map, v []data.Value) data.Value {
 	return data.Int(rand.Int63n(int64(v[0].(data.Int))))
 }
 
-func funcStrContains(v []data.Value) data.Value {
+func funcStrContains(ij data.Map, v []data.Value) data.Value {
 	return data.Bool(strings.Contains(string(v[0].(data.String)), string(v[1].(data.String))))
 }
 
-func funcRange(v []data.Value) data.Value {
+func funcRange(ij data.Map, v []data.Value) data.Value {
 	var (
 		increment = 1
 		init      = 0
@@ -173,6 +173,6 @@ func funcRange(v []data.Value) data.Value {
 	return indices
 }
 
-func funcHasData(v []data.Value) data.Value {
+func funcHasData(ij data.Map, v []data.Value) data.Value {
 	return data.Bool(true)
 }
